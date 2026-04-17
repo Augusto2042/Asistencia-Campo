@@ -88,7 +88,7 @@
                 mostrarMensaje(`✅ ${tipoAccion} registrada:\n${v_nom} ${v_ape}`, "green");
                 document.getElementById('form-container').style.display = "none";
             } else {
-                mostrarMensaje("❌ Error al guardar en Supabase.", "red");
+                mostrarMensaje("❌ Error al guardar en base de datos.", "red");
             }
         } catch (e) {
             mostrarMensaje("❌ Error de conexión.", "red");
