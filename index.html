@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Estación de Marcaje Segura</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #2c3e50; color: white; }
+        .qr-container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        #timer { margin-top: 20px; font-size: 1.2rem; color: #bdc3c7; }
+        .instrucciones { text-align: center; max-width: 400px; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+
+    <div class="instrucciones">
+        <h1>Escanea para Marcar</h1>
+        <p>Abre la app en tu celular y escanea este código. El código cambia cada 10 minutos por seguridad.</p>
+    </div>
+
+    <div class="qr-container">
+        <div id="qrcode"></div>
+    </div>
+
+    <div id="timer">Actualizando en: <span id="segundos">600</span>s</div>
+
+    <script>
+        let qr = new QRCode(document.getElementById("qrcode"), { width: 300, height: 300 });
+
+        function actualizarQR() {
+            const ahora = new Date();
+            const bloque10Min = Math.floor(ahora.getMinutes() / 10);
+            const tokenSeguro = "TOKEN-" + ahora.getFullYear() + ahora.getMonth() + ahora.getDate() + ahora.getHours() + bloque10Min;
+
+            qr.makeCode(tokenSeguro);
+            console.log("Token actual:", tokenSeguro);
+        }
+
+        let segundosRestantes = 600;
+        setInterval(() => {
+            segundosRestantes--;
+            if (segundosRestantes <= 0) {
+                actualizarQR();
+                segundosRestantes = 600;
+            }
+            document.getElementById('segundos').innerText = segundosRestantes;
+        }, 1000);
+
+        actualizarQR();
+    </script>
+</body>
+</html>
