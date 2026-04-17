@@ -36,46 +36,44 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN DE TU PROYECTO SUPABASE
     const SUB_URL = "https://ccogvshatmpjgvkzpkov.supabase.co";
     const SUB_KEY = "sb_publishable_ZiqEP4XQoXAN5Y428lE4TA_W2-y-QsT";
 
-    async function enviarDatos(tipo) {
-        const nom = document.getElementById('nombre').value.trim();
-        const ape = document.getElementById('apellido').value.trim();
-        const rut = document.getElementById('rut').value.trim();
+    async function enviarDatos(tipoAccion) {
+        const v_nom = document.getElementById('nombre').value.trim();
+        const v_ape = document.getElementById('apellido').value.trim();
+        const v_rut = document.getElementById('rut').value.trim();
         
-        if(!nom || !ape || !rut) {
+        if(!v_nom || !v_ape || !v_rut) {
             alert("⚠️ Por favor, completa todos los campos.");
             return;
         }
 
-        // VALIDACIÓN DE TOKEN DINÁMICO (Seguridad de 1 hora)
         const urlParams = new URLSearchParams(window.location.search);
         const tokenRecibido = urlParams.get('token');
         const ahora = new Date();
         const tokenCorrecto = "SEC-" + ahora.getFullYear() + ahora.getMonth() + ahora.getDate() + ahora.getHours();
 
         if (tokenRecibido !== tokenCorrecto) {
-            mostrarMensaje("❌ CÓDIGO EXPIRADO.\nDebes escanear el QR que aparece actualmente en la pantalla.", "red");
+            mostrarMensaje("❌ CÓDIGO EXPIRADO.\nEscanea el QR actual de la pantalla.", "red");
             return;
         }
 
-        mostrarMensaje("⏳ Registrando en la nube...", "orange");
+        mostrarMensaje("⏳ Conectando con la nube...", "orange");
 
         const fechaActual = ahora.toLocaleDateString('es-CL');
         const horaActual = ahora.toLocaleTimeString('es-CL');
 
-        // Los nombres de las columnas deben ser idénticos a los de Supabase
-        const datos = {
-            Nombre: nom,
-            Apellido: ape,
-            Rut: rut,
-            Fecha: fechaActual
+        // AQUÍ ESTÁ EL CAMBIO: Todo en minúsculas para que Supabase no dé error
+        const datosEnviados = {
+            nombre: v_nom,
+            apellido: v_ape,
+            rut: v_rut,
+            fecha: fechaActual
         };
 
-        if(tipo === 'Entrada') datos.Entrada = horaActual;
-        else datos.Salida = horaActual;
+        if(tipoAccion === 'Entrada') datosEnviados.entrada = horaActual;
+        else datosEnviados.salida = horaActual;
 
         try {
             const res = await fetch(`${SUB_URL}/rest/v1/asistencia`, {
@@ -86,19 +84,19 @@
                     "Content-Type": "application/json",
                     "Prefer": "return=minimal"
                 },
-                body: JSON.stringify(datos)
+                body: JSON.stringify(datosEnviados)
             });
 
             if(res.ok) {
-                mostrarMensaje(`✅ ${tipo} registrada:\n${nom} ${ape}\nHora: ${horaActual}`, "green");
+                mostrarMensaje(`✅ ${tipoAccion} registrada:\n${v_nom} ${v_ape}\nHora: ${horaActual}`, "green");
                 document.getElementById('form-container').style.display = "none";
             } else {
-                const errorLog = await res.json();
-                console.error(errorLog);
-                throw new Error();
+                const errorData = await res.json();
+                console.log(errorData);
+                mostrarMensaje("❌ Error de tabla.\nRevisa que las columnas en Supabase sean minúsculas.", "red");
             }
         } catch (e) {
-            mostrarMensaje("❌ Error de conexión.\nVerifica que la tabla 'asistencia' esté bien creada.", "red");
+            mostrarMensaje("❌ Error de red.\nVerifica tu internet.", "red");
         }
     }
 
