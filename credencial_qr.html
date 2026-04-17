@@ -3,83 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro Asistencia</title>
+    <title>Asistencia Agrifrut</title>
     <style>
-        body { font-family: sans-serif; background: #1a73e8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a73e8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
-        h2 { color: #1a73e8; text-align: center; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        h2 { color: #1a73e8; text-align: center; margin-top: 0; font-size: 1.6rem; }
+        p.sub-title { text-align: center; color: #666; margin-top: -10px; margin-bottom: 20px; font-size: 0.9rem; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; }
+        input:focus { border-color: #1a73e8; }
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        button { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
+        button { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: transform 0.2s; }
+        button:active { transform: scale(0.95); }
         .btn-in { background: #28a745; }
         .btn-out { background: #dc3545; }
-        #mensaje { margin-top: 20px; text-align: center; font-weight: bold; padding: 15px; border-radius: 10px; display: none; }
+        #mensaje { margin-top: 20px; text-align: center; font-weight: bold; padding: 15px; border-radius: 10px; display: none; line-height: 1.4; }
     </style>
 </head>
 <body>
+
 <div class="card">
-    <h2>📝 Registro Diario</h2>
+    <h2>Asistencia Agrifrut</h2>
+    <p class="sub-title">Control de Acceso Digital</p>
+    
     <div id="form-container">
         <input type="text" id="nombre" placeholder="Nombre">
         <input type="text" id="apellido" placeholder="Apellido">
-        <input type="text" id="rut" placeholder="RUT">
+        <input type="text" id="rut" placeholder="RUT (ej: 12.345.678-9)">
+        
         <div class="btn-group">
-            <button class="btn-in" onclick="enviar('entrada')">ENTRADA</button>
-            <button class="btn-out" onclick="enviar('salida')">SALIDA</button>
+            <button class="btn-in" onclick="enviarDatos('Entrada')">ENTRADA</button>
+            <button class="btn-out" onclick="enviarDatos('Salida')">SALIDA</button>
         </div>
     </div>
     <div id="mensaje"></div>
 </div>
 
 <script>
-    const URL = "https://ccogvshatmpjgvkzpkov.supabase.co";
-    const KEY = "sb_publishable_ZiqEP4XQoXAN5Y428lE4TA_W2-y-QsT";
+    const SUB_URL = "https://ccogvshatmpjgvkzpkov.supabase.co";
+    const SUB_KEY = "sb_publishable_ZiqEP4XQoXAN5Y428lE4TA_W2-y-QsT";
 
-    async function enviar(tipo) {
-        const n = document.getElementById('nombre').value.trim();
-        const a = document.getElementById('apellido').value.trim();
-        const r = document.getElementById('rut').value.trim();
-        if(!n || !a || !r) return alert("Completa los datos");
+    async function enviarDatos(tipoAccion) {
+        const v_nom = document.getElementById('nombre').value.trim();
+        const v_ape = document.getElementById('apellido').value.trim();
+        const v_rut = document.getElementById('rut').value.trim();
+        
+        if(!v_nom || !v_ape || !v_rut) {
+            alert("⚠️ Por favor, completa todos los campos.");
+            return;
+        }
 
-        const msg = document.getElementById('mensaje');
-        msg.style.display = "block";
-        msg.innerText = "⏳ Registrando...";
-        msg.style.background = "#fff3cd";
-
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenRecibido = urlParams.get('token');
         const ahora = new Date();
-        const datos = {
-            nombre: n,
-            apellido: a,
-            rut: r,
-            fecha: ahora.toLocaleDateString('es-CL')
+        const tokenCorrecto = "SEC-" + ahora.getFullYear() + ahora.getMonth() + ahora.getDate() + ahora.getHours();
+
+        if (tokenRecibido !== tokenCorrecto) {
+            mostrarMensaje("❌ CÓDIGO EXPIRADO.\nEscanea el QR actual de la pantalla.", "red");
+            return;
+        }
+
+        mostrarMensaje("⏳ Registrando...", "orange");
+
+        const fechaActual = ahora.toLocaleDateString('es-CL');
+        const horaActual = ahora.toLocaleTimeString('es-CL');
+
+        const datosEnviados = {
+            nombre: v_nom,
+            apellido: v_ape,
+            rut: v_rut,
+            fecha: fechaActual
         };
-        datos[tipo] = ahora.toLocaleTimeString('es-CL');
+
+        if(tipoAccion === 'Entrada') datosEnviados.entrada = horaActual;
+        else datosEnviados.salida = horaActual;
 
         try {
-            const res = await fetch(`${URL}/rest/v1/asistencia`, {
+            const res = await fetch(`${SUB_URL}/rest/v1/asistencia`, {
                 method: "POST",
                 headers: {
-                    "apikey": KEY,
-                    "Authorization": `Bearer ${KEY}`,
-                    "Content-Type": "application/json"
+                    "apikey": SUB_KEY,
+                    "Authorization": `Bearer ${SUB_KEY}`,
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
                 },
-                body: JSON.stringify(datos)
+                body: JSON.stringify(datosEnviados)
             });
 
             if(res.ok) {
-                msg.innerText = "✅ ¡EXITOSO!";
-                msg.style.background = "#d4edda";
+                mostrarMensaje(`✅ ${tipoAccion} registrada:\n${v_nom} ${v_ape}\nHora: ${horaActual}`, "green");
                 document.getElementById('form-container').style.display = "none";
             } else {
-                const error = await res.json();
-                msg.innerText = "❌ ERROR: " + error.message;
-                msg.style.background = "#f8d7da";
+                mostrarMensaje("❌ Error al guardar en la base de datos.", "red");
             }
         } catch (e) {
-            msg.innerText = "❌ ERROR DE CONEXIÓN";
-            msg.style.background = "#f8d7da";
+            mostrarMensaje("❌ Error de conexión.", "red");
         }
     }
+
+    function mostrarMensaje(texto, color) {
+        const m = document.getElementById('mensaje');
+        m.innerText = texto;
+        m.style.background = color === "red" ? "#f8d7da" : (color === "orange" ? "#fff3cd" : "#d4edda");
+        m.style.color = color === "red" ? "#721c24" : (color === "orange" ? "#856404" : "#155724");
+        m.style.display = "block";
+    }
 </script>
+
 </body>
 </html>
