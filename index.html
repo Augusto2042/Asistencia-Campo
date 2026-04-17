@@ -2,27 +2,88 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Estación de Marcaje</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Asistencia - Panel Principal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #1a73e8; color: white; margin: 0; }
-        .qr-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
-        .reloj { font-size: 4rem; font-weight: bold; margin-bottom: 10px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); 
+            color: white; 
+            margin: 0; 
+            overflow: hidden;
+        }
+        .reloj { 
+            font-size: 5rem; 
+            font-weight: 800; 
+            margin-bottom: 5px; 
+            letter-spacing: -2px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .fecha {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        h1 { margin: 0; font-size: 2rem; text-transform: uppercase; letter-spacing: 2px; }
+        p { margin-bottom: 25px; font-size: 1.1rem; opacity: 0.8; }
+        .qr-card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 30px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease;
+        }
+        .qr-card:hover { transform: scale(1.02); }
+        #timer-msg { margin-top: 30px; font-size: 0.9rem; background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 50px; }
     </style>
 </head>
 <body>
     <div class="reloj" id="reloj">00:00:00</div>
-    <h1>ESCANEA AQUÍ</h1>
-    <div class="qr-card"><div id="qrcode"></div></div>
+    <div class="fecha" id="fecha">-- de -- de ----</div>
+    
+    <h1>Escanea para Marcar</h1>
+    <p>Apunta con la cámara de tu celular</p>
+    
+    <div class="qr-card">
+        <div id="qrcode"></div>
+    </div>
+    
+    <div id="timer-msg">🔒 Código de seguridad dinámico protegido</div>
+
     <script>
-        let qr = new QRCode(document.getElementById("qrcode"), { width: 350, height: 350 });
+        const qr = new QRCode(document.getElementById("qrcode"), {
+            width: 320,
+            height: 320,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
         function actualizar() {
             const ahora = new Date();
-            document.getElementById('reloj').innerText = ahora.toLocaleTimeString();
+            
+            // Actualizar Reloj
+            document.getElementById('reloj').innerText = ahora.toLocaleTimeString('es-CL');
+            
+            // Actualizar Fecha
+            const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('fecha').innerText = ahora.toLocaleDateString('es-CL', opciones);
+
+            // Generar Token (Cambia cada hora)
             const token = "SEC-" + ahora.getFullYear() + ahora.getMonth() + ahora.getDate() + ahora.getHours();
+            
+            // URL Final
             const url = `https://augusto2042.github.io/Asistencia-Campo/credencial_qr.html?token=${token}`;
+            
             qr.makeCode(url);
         }
+
         setInterval(actualizar, 1000);
         actualizar();
     </script>
