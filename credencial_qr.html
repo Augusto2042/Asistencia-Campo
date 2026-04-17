@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear mi Credencial QR</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f9; color: #333; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        input { display: block; width: 90%; margin: 10px auto; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; }
+        button { background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 5px; cursor: pointer; width: 90%; font-weight: bold; }
+        #qrcode { margin-top: 20px; display: flex; justify-content: center; }
+        .footer-msg { font-size: 0.8rem; color: #666; margin-top: 15px; background: #fff3cd; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Mi Credencial de Campo</h2>
+    <p>Ingresa tus datos para generar tu código</p>
+
+    <input type="text" id="nom" placeholder="Tu Nombre">
+    <input type="text" id="ape" placeholder="Tu Apellido">
+    <input type="text" id="rut" placeholder="Tu RUT (Ej: 12345678-9)">
+
+    <button onclick="generarQR()">GENERAR MI QR</button>
+
+    <div id="qrcode"></div>
+
+    <div id="instrucciones" style="display:none;" class="footer-msg">
+        <strong>¡LISTO!</strong><br>
+        Toma una captura de pantalla a este código QR. Es el que debes mostrar en la tablet al entrar y salir.
+    </div>
+</div>
+
+<script>
+    function generarQR() {
+        const n = document.getElementById('nom').value.trim();
+        const a = document.getElementById('ape').value.trim();
+        const r = document.getElementById('rut').value.trim();
+
+        if(!n || !a || !r) return alert("Por favor, completa todos los campos.");
+
+        document.getElementById("qrcode").innerHTML = "";
+
+        // Contenido que el lector de la tablet entenderá
+        const contenido = `${n},${a},${r}`;
+
+        new QRCode(document.getElementById("qrcode"), {
+            text: contenido,
+            width: 250,
+            height: 250
+        });
+
+        document.getElementById('instrucciones').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
