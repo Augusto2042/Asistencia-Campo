@@ -10,10 +10,8 @@
         h2 { color: #1a73e8; text-align: center; margin-top: 0; font-size: 1.6rem; }
         p.sub-title { text-align: center; color: #666; margin-top: -10px; margin-bottom: 20px; font-size: 0.9rem; }
         input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; }
-        input:focus { border-color: #1a73e8; }
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        button { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: transform 0.2s; }
-        button:active { transform: scale(0.95); }
+        button { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
         .btn-in { background: #28a745; }
         .btn-out { background: #dc3545; }
         #mensaje { margin-top: 20px; text-align: center; font-weight: bold; padding: 15px; border-radius: 10px; display: none; line-height: 1.4; }
@@ -64,18 +62,15 @@
 
         mostrarMensaje("⏳ Registrando...", "orange");
 
-        const fechaActual = ahora.toLocaleDateString('es-CL');
-        const horaActual = ahora.toLocaleTimeString('es-CL');
-
         const datosEnviados = {
             nombre: v_nom,
             apellido: v_ape,
             rut: v_rut,
-            fecha: fechaActual
+            fecha: ahora.toLocaleDateString('es-CL')
         };
 
-        if(tipoAccion === 'Entrada') datosEnviados.entrada = horaActual;
-        else datosEnviados.salida = horaActual;
+        if(tipoAccion === 'Entrada') datosEnviados.entrada = ahora.toLocaleTimeString('es-CL');
+        else datosEnviados.salida = ahora.toLocaleTimeString('es-CL');
 
         try {
             const res = await fetch(`${SUB_URL}/rest/v1/asistencia`, {
@@ -90,10 +85,10 @@
             });
 
             if(res.ok) {
-                mostrarMensaje(`✅ ${tipoAccion} registrada:\n${v_nom} ${v_ape}\nHora: ${horaActual}`, "green");
+                mostrarMensaje(`✅ ${tipoAccion} registrada:\n${v_nom} ${v_ape}`, "green");
                 document.getElementById('form-container').style.display = "none";
             } else {
-                mostrarMensaje("❌ Error al guardar en la base de datos.", "red");
+                mostrarMensaje("❌ Error al guardar en Supabase.", "red");
             }
         } catch (e) {
             mostrarMensaje("❌ Error de conexión.", "red");
@@ -108,6 +103,5 @@
         m.style.display = "block";
     }
 </script>
-
 </body>
 </html>
