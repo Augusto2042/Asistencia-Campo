@@ -3,57 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear mi Credencial QR</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Registro de Asistencia</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f9; color: #333; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        input { display: block; width: 90%; margin: 10px auto; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; }
-        button { background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 5px; cursor: pointer; width: 90%; font-weight: bold; }
-        #qrcode { margin-top: 20px; display: flex; justify-content: center; }
-        .footer-msg { font-size: 0.8rem; color: #666; margin-top: 15px; background: #fff3cd; padding: 10px; border-radius: 5px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a73e8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
+        h2 { color: #1a73e8; text-align: center; margin-top: 0; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; }
+        input:focus { border-color: #1a73e8; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        button { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: transform 0.2s; }
+        button:active { transform: scale(0.95); }
+        .btn-in { background: #28a745; }
+        .btn-out { background: #dc3545; }
+        #mensaje { margin-top: 20px; text-align: center; font-weight: bold; padding: 15px; border-radius: 10px; display: none; line-height: 1.4; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Mi Credencial de Campo</h2>
-    <p>Ingresa tus datos para generar tu código</p>
-
-    <input type="text" id="nom" placeholder="Tu Nombre">
-    <input type="text" id="ape" placeholder="Tu Apellido">
-    <input type="text" id="rut" placeholder="Tu RUT (Ej: 12345678-9)">
-
-    <button onclick="generarQR()">GENERAR MI QR</button>
-
-    <div id="qrcode"></div>
-
-    <div id="instrucciones" style="display:none;" class="footer-msg">
-        <strong>¡LISTO!</strong><br>
-        Toma una captura de pantalla a este código QR. Es el que debes mostrar en la tablet al entrar y salir.
+    <h2>📝 Registro Diario</h2>
+    <div id="form-container">
+        <input type="text" id="nombre" placeholder="Nombre">
+        <input type="text" id="apellido" placeholder="Apellido">
+        <input type="text" id="rut" placeholder="RUT (ej: 12345678-9)">
+        
+        <div class="btn-group">
+            <button class="btn-in" onclick="enviarDatos('Entrada')">ENTRADA</button>
+            <button class="btn-out" onclick="enviarDatos('Salida')">SALIDA</button>
+        </div>
     </div>
+    <div id="mensaje"></div>
 </div>
 
 <script>
-    function generarQR() {
-        const n = document.getElementById('nom').value.trim();
-        const a = document.getElementById('ape').value.trim();
-        const r = document.getElementById('rut').value.trim();
+    // CONFIGURACIÓN DE TU PROYECTO SUPABASE
+    const SUB_URL = "https://ccogvshatmpjgvkzpkov.supabase.co";
+    const SUB_KEY = "sb_publishable_ZiqEP4XQoXAN5Y428lE4TA_W2-y-QsT";
 
-        if(!n || !a || !r) return alert("Por favor, completa todos los campos.");
+    async function enviarDatos(tipo) {
+        const nom = document.getElementById('nombre').value.trim();
+        const ape = document.getElementById('apellido').value.trim();
+        const rut = document.getElementById('rut').value.trim();
+        
+        if(!nom || !ape || !rut) {
+            alert("⚠️ Por favor, completa todos los campos.");
+            return;
+        }
 
-        document.getElementById("qrcode").innerHTML = "";
+        // VALIDACIÓN DE TOKEN DINÁMICO (Seguridad de 1 hora)
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenRecibido = urlParams.get('token');
+        const ahora = new Date();
+        const tokenCorrecto = "SEC-" + ahora.getFullYear() + ahora.getMonth() + ahora.getDate() + ahora.getHours();
 
-        // Contenido que el lector de la tablet entenderá
-        const contenido = `${n},${a},${r}`;
+        if (tokenRecibido !== tokenCorrecto) {
+            mostrarMensaje("❌ CÓDIGO EXPIRADO.\nDebes escanear el QR que aparece actualmente en la pantalla.", "red");
+            return;
+        }
 
-        new QRCode(document.getElementById("qrcode"), {
-            text: contenido,
-            width: 250,
-            height: 250
-        });
+        mostrarMensaje("⏳ Registrando en la nube...", "orange");
 
-        document.getElementById('instrucciones').style.display = 'block';
+        const fechaActual = ahora.toLocaleDateString('es-CL');
+        const horaActual = ahora.toLocaleTimeString('es-CL');
+
+        // Los nombres de las columnas deben ser idénticos a los de Supabase
+        const datos = {
+            Nombre: nom,
+            Apellido: ape,
+            Rut: rut,
+            Fecha: fechaActual
+        };
+
+        if(tipo === 'Entrada') datos.Entrada = horaActual;
+        else datos.Salida = horaActual;
+
+        try {
+            const res = await fetch(`${SUB_URL}/rest/v1/asistencia`, {
+                method: "POST",
+                headers: {
+                    "apikey": SUB_KEY,
+                    "Authorization": `Bearer ${SUB_KEY}`,
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                },
+                body: JSON.stringify(datos)
+            });
+
+            if(res.ok) {
+                mostrarMensaje(`✅ ${tipo} registrada:\n${nom} ${ape}\nHora: ${horaActual}`, "green");
+                document.getElementById('form-container').style.display = "none";
+            } else {
+                const errorLog = await res.json();
+                console.error(errorLog);
+                throw new Error();
+            }
+        } catch (e) {
+            mostrarMensaje("❌ Error de conexión.\nVerifica que la tabla 'asistencia' esté bien creada.", "red");
+        }
+    }
+
+    function mostrarMensaje(texto, color) {
+        const m = document.getElementById('mensaje');
+        m.innerText = texto;
+        m.style.background = color === "red" ? "#f8d7da" : (color === "orange" ? "#fff3cd" : "#d4edda");
+        m.style.color = color === "red" ? "#721c24" : (color === "orange" ? "#856404" : "#155724");
+        m.style.display = "block";
     }
 </script>
 
